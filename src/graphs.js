@@ -29,12 +29,13 @@ function barHorizontal(selector, data, options) {
         // responsive dimensions
         chartWidth = containerWidth(selector),
         labelWidth = chartWidth / 4,
-        valuelWidth = chartWidth / 10,
+        valuelWidth = chartWidth / 7.5,
         barWidth = chartWidth - labelWidth,
         chartHeight = barHeight * options.barCount,
         // scales & text
         wscale = d3.scale.linear().domain([0, maxval]).range(['0px', barWidth - valuelWidth + 'px'])
-        title = function(d) {return d.key + ': ' + d.value};
+        title = function(d) {return d.key + ': ' + d.value},
+        formatValue = d3.format(',d');
 
     var bar = d3.select(selector);
     bar.selectAll('svg').remove();
@@ -80,7 +81,7 @@ function barHorizontal(selector, data, options) {
         .attr('x', chartWidth - valuelWidth + valueOffset)
         .attr('y', function(d, i) {return i * barHeight - labelPadding + barHeightOffset})
         .attr('text-anchor', 'start')
-        .text(function(d) {return d.value});
+        .text(function(d) {return formatValue(d.value)});
 
     // add click handler if appropriate options are set
     if (options.hasOwnProperty('clickBase')) {
