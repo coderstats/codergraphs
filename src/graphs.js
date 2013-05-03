@@ -1,48 +1,131 @@
-function containerWidth(selector) {
-  return parseInt($(selector).width())
-}
-function containerHeight(selector) {
-  return parseInt($(selector).height())
-}
+(function(d3) {
 
-function truncate(s, max) {
-    if (s.length > max) {
-        s = s.substring(0, max-1) + '.';
-    }
-    return s;
-}
+var containerWidth = function(selector) {
+        return parseInt($(selector).width())
+    },
+    containerHeight = function (selector) {
+        return parseInt($(selector).height())
+    },
+    truncate = function(s, max) {
+        if (s.length > max) {
+            s = s.substring(0, max-1) + '.';
+        }
+        return s;
+    };
 
-function barHorizontal(selector, data, options) {
-    if ('undefined' === typeof options || null === options) {
-        options = {barCount: data.length};
-    }
-    if (options.hasOwnProperty('barCount')) {
-        data = data.slice(0, options.barCount);
-    }
+d3.graph = {};
 
-    var maxval = d3.max(data, function(d) { return d.value });
-    var barHeight = 30,
-        barPadding = 8,
-        labelPadding = 6,
-        barHeightOffset = barHeight - barPadding,
-        valueOffset = 10,
-        // responsive dimensions
-        chartWidth = containerWidth(selector),
-        labelWidth = chartWidth / 4,
-        valuelWidth = chartWidth / 7.5,
+d3.graph.bar = function(selector, data, options) {
+    var defaults = {
+        barHeight: 30,
+        barPadding: 8,
+        labelRatio: 4,
+        labelPadding: 6,
+        valueRatio: 7.5,
+        valueOffset: 10,
+        barCount: data.length
+    };
+    if ('undefined' !== typeof options && null !== options) {
+        for (o in options) defaults[o] = options[o];
+    }
+    options = defaults;
+
+    // responsive dimensions
+    var chartWidth = containerWidth(selector),
+        labelWidth = chartWidth / options.labelRatio,
+        valuelWidth = chartWidth / options.valueRatio,
         barWidth = chartWidth - labelWidth,
-        chartHeight = barHeight * options.barCount,
-        // scales & text
-        wscale = d3.scale.linear().domain([0, maxval]).range(['0px', barWidth - valuelWidth + 'px'])
+        chartHeight = options.barHeight * options.barCount,
+        // scales, texts, offsets
+        maxVal = d3.max(data, function(d) { return d.value }),
+        wscale = d3.scale.linear().domain([0, maxVal]).range(['0px', barWidth - valuelWidth + 'px'])
         title = function(d) {return d.key + ': ' + d.value},
-        formatValue = d3.format(',d');
+        y = function(d, i) {return i * options.barHeight},
+        valueY = function(d, i) {return i * options.barHeight + (options.barHeight/2)},
+        // labels
+        labelClick = function(d) { options.clickBase && window.open(options.clickBase + d.key) },
+        labelClass = function(d) { return options.clickBase ? 'barlabel link' : 'barlabel' },
+        labelTitle = function(d) { return options.clickBase ? 'Click to open ' + options.clickBase + d.key : d.key },
+        // formats
+        formatValue = d3.format(',d'),
+        // bar and graph objects
+        bar = {
+            selector: selector,
+            options: options,
+            data: data.slice(0, options.barCount)
+        },
+        graph = d3.select(selector);
 
-    var bar = d3.select(selector);
-    bar.selectAll('svg').remove();
-    var svg = bar.append('svg')
+    graph.selectAll('svg').remove();
+    var svg = graph.append('svg')
         .attr('class', 'bar')
         .attr('width', chartWidth)
-        .attr('height', chartHeight - barPadding);
+        .attr('height', chartHeight - options.barPadding);
+
+    bar.values = function() {
+        var values = svg.selectAll('text').data(data).enter();
+        values.append('text')
+            .attr('class', 'barvalue')
+            .attr('x', chartWidth - valuelWidth + options.valueOffset)
+            .attr('y', valueY)
+            .attr('text-anchor', 'start')
+            .text(function(d) {return formatValue(d.value)});
+    };
+
+    bar.horizontal = function() {
+        svg.selectAll('rect')
+            .data(data)
+            .enter().append('rect')
+            .attr('x', labelWidth)
+            .attr('y', function(d, i) {return i * options.barHeight})
+            .attr('width', function(d) {return isNaN(d.value) ? 0 : wscale(d.value)})
+            .attr('height', options.barHeight - options.barPadding)
+            .append('title').text(title);
+
+        var labels = svg.selectAll('text').data(data).enter();
+        labels.append('text')
+            .attr('class', labelClass)
+            .attr('x', 0)
+            .attr('y', valueY)
+            .attr('text-anchor', 'start')
+            .text(function(d) {return truncate(d.key, 16)})
+            .on('click', labelClick)
+            .append('title')
+                .text(labelTitle);
+
+        // FIXME calling bar.values doesn't show values, why?
+        labels.append('text')
+            .attr('class', 'barvalue')
+            .attr('x', chartWidth - valuelWidth + options.valueOffset)
+            .attr('y', valueY)
+            .attr('text-anchor', 'start')
+            .text(function(d) {return formatValue(d.value)});
+    };
+
+    bar.horizontalImage = function() {
+        svg.selectAll('rect')
+            .data(data)
+            .enter().append('rect')
+            .attr('width', function(d) {return isNaN(d.value) ? 0 : wscale(d.value)})
+            .attr('height', options.barHeight - options.barPadding)
+            .attr('x', options.imageWidth)
+            .attr('y', y)
+            .append('title').text(title);
+
+        var labels = svg.selectAll('image').data(data).enter();
+        labels.append('svg:image')
+            .attr('xlink:href', function(d) { return d.image.src })
+            .attr('class', labelClass)
+            .attr('width', options.imageWidth - options.barPadding)
+            .attr('height', options.barHeight - options.barPadding)
+            .attr('x', 0)
+            .attr('y', y)
+            .on('click', labelClick)
+            .append('title')
+                .text(labelTitle);
+
+        bar.values();
+    };
 
     // no data
     if (data.length == 0) {
@@ -52,48 +135,12 @@ function barHorizontal(selector, data, options) {
             .attr('y', chartHeight/2)
             .attr('text-anchor', 'middle')
             .text('No Data');
-        return;
     }
 
-    // add actual bars
-    svg.selectAll('rect.fillblue')
-        .data(data)
-        .enter().append('rect')
-        .attr('class', 'fillblue')
-        .attr('x', labelWidth)
-        .attr('y', function(d, i) {return i * barHeight})
-        .attr('width', function(d) {return isNaN(d.value) ? 0 : wscale(d.value)})
-        .attr('height', barHeight - barPadding)
-        .append('title').text(title);
-
-    // add lablels
-    var labels = svg.selectAll('text').data(data).enter();
-    labels.append('text')
-        .attr('class', 'barlabel')
-        .attr('x', 0)
-        .attr('y', function(d, i) {return i * barHeight - labelPadding + barHeightOffset})
-        .attr('text-anchor', 'start')
-        .text(function(d) {return truncate(d.key, 16)});
-
-    // add values
-    labels.append('text')
-        .attr('class', 'barvalue')
-        .attr('x', chartWidth - valuelWidth + valueOffset)
-        .attr('y', function(d, i) {return i * barHeight - labelPadding + barHeightOffset})
-        .attr('text-anchor', 'start')
-        .text(function(d) {return formatValue(d.value)});
-
-    // add click handler if appropriate options are set
-    if (options.hasOwnProperty('clickBase')) {
-        svg.selectAll('text.barlabel')
-            .attr('class', 'barlabel link')
-            .on('click', function(d) {window.open(options.clickBase + d.key)})
-            .append('title')
-                .text(function(d) { return 'Click to open ' + options.clickBase + d.key});
-    }
+    return bar;
 }
 
-function pie(selector, data) {
+d3.graph.pie = function(selector, data) {
     var chartWidth = containerWidth(selector),
         chartHeight = chartWidth,
         radius = Math.min(chartWidth, chartHeight) / 2,
@@ -115,13 +162,28 @@ function pie(selector, data) {
         .enter().append('g')
         .attr('class', 'arc');
 
-      g.append('path')
+    g.append('path')
           .attr('d', arc)
           .style('fill', function(d) { return color(d.value); });
 
-      g.append('text')
-          .attr('transform', function(d) { return 'translate(' + arc.centroid(d) + ')'; })
-          .attr('dy', '.35em')
-          .style('text-anchor', 'middle')
-          .text(function(d) { return d.data.key + ': ' + d.value; });
+    var glabels = d3.select(selector).append('svg')
+        .attr('width', chartWidth)
+        .attr('height', 50);
+
+    glabels.selectAll('text').data(data).enter()
+        .append('text')
+            .attr('x', 30)
+            .attr('y', function(d, i) {return (1 + i) * 20})
+            .style('text-anchor', 'start')
+            .text(function(d) { return d.key + ': ' + d.value });
+
+    glabels.selectAll('rect').data(data).enter()
+        .append('rect')
+            .attr('x', 10)
+            .attr('y', function(d, i) {return ((1 + i) * 20) - 10})
+            .attr('width', 10)
+            .attr('height', 10)
+            .style('fill', function(d) { return color(d.value); });
 }
+
+})(d3);

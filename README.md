@@ -1,3 +1,3 @@
 # D3 based Graphs
 
-For a demo see [CoderStats](http://cs.geeksta.net/)
+For a demo see [CoderStats](http://coderstats.net/)
