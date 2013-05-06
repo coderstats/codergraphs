@@ -43,7 +43,7 @@ d3.graph.bar = function(selector, data, options) {
         y = function(d, i) {return i * options.barHeight},
         valueY = function(d, i) {return i * options.barHeight + (options.barHeight/2)},
         // labels
-        labelClick = function(d) { options.clickBase && window.open(options.clickBase + d.key) },
+        labelClick = function(d) { options.clickBase && (document.location.href = options.clickBase + d.key) },
         labelClass = function(d) { return options.clickBase ? 'barlabel link' : 'barlabel' },
         labelTitle = function(d) { return options.clickBase ? 'Click to open ' + options.clickBase + d.key : d.key },
         // formats
@@ -144,7 +144,7 @@ d3.graph.pie = function(selector, data) {
     var chartWidth = containerWidth(selector),
         chartHeight = chartWidth,
         radius = Math.min(chartWidth, chartHeight) / 2,
-        color = d3.scale.ordinal().range(['#1F78B4', '#b2df8a'])
+        color = d3.scale.category10().domain(d3.keys(data)),
         arc = d3.svg.arc().outerRadius(radius - 10).innerRadius(0);
 
     var pie = d3.layout.pie()
@@ -164,7 +164,7 @@ d3.graph.pie = function(selector, data) {
 
     g.append('path')
           .attr('d', arc)
-          .style('fill', function(d) { return color(d.value); });
+          .style('fill', function(d) { return d.data.color || color(d.data.key); });
 
     var glabels = d3.select(selector).append('svg')
         .attr('width', chartWidth)
@@ -183,7 +183,7 @@ d3.graph.pie = function(selector, data) {
             .attr('y', function(d, i) {return ((1 + i) * 20) - 10})
             .attr('width', 10)
             .attr('height', 10)
-            .style('fill', function(d) { return color(d.value); });
+            .style('fill', function(d) { return d.color || color(d.key); });
 }
 
 })(d3);
