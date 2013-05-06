@@ -1,10 +1,7 @@
 (function(d3) {
 
 var containerWidth = function(selector) {
-        return parseInt($(selector).width())
-    },
-    containerHeight = function (selector) {
-        return parseInt($(selector).height())
+        return parseInt(d3.select(selector).style('width'))
     },
     truncate = function(s, max) {
         if (s.length > max) {
