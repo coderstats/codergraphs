@@ -60,7 +60,7 @@ d3.graph.bar = function(selector, data, options) {
         .attr('height', chartHeight - options.barPadding);
 
     bar.values = function() {
-        var values = svg.selectAll('text').data(data).enter();
+        var values = svg.selectAll('text').data(bar.data).enter();
         values.append('text')
             .attr('class', 'barvalue')
             .attr('x', chartWidth - valuelWidth + options.valueOffset)
@@ -71,7 +71,7 @@ d3.graph.bar = function(selector, data, options) {
 
     bar.horizontal = function() {
         svg.selectAll('rect')
-            .data(data)
+            .data(bar.data)
             .enter().append('rect')
             .attr('x', labelWidth)
             .attr('y', function(d, i) {return i * options.barHeight})
@@ -79,7 +79,7 @@ d3.graph.bar = function(selector, data, options) {
             .attr('height', options.barHeight - options.barPadding)
             .append('title').text(title);
 
-        var labels = svg.selectAll('text').data(data).enter();
+        var labels = svg.selectAll('text').data(bar.data).enter();
         labels.append('text')
             .attr('class', labelClass)
             .attr('x', 0)
@@ -101,7 +101,7 @@ d3.graph.bar = function(selector, data, options) {
 
     bar.horizontalImage = function() {
         svg.selectAll('rect')
-            .data(data)
+            .data(bar.data)
             .enter().append('rect')
             .attr('width', function(d) {return isNaN(d.value) ? 0 : wscale(d.value)})
             .attr('height', options.barHeight - options.barPadding)
@@ -109,7 +109,7 @@ d3.graph.bar = function(selector, data, options) {
             .attr('y', y)
             .append('title').text(title);
 
-        var labels = svg.selectAll('image').data(data).enter();
+        var labels = svg.selectAll('image').data(bar.data).enter();
         labels.append('svg:image')
             .attr('xlink:href', function(d) { return d.image.src })
             .attr('class', labelClass)
@@ -125,7 +125,7 @@ d3.graph.bar = function(selector, data, options) {
     };
 
     // no data
-    if (data.length == 0) {
+    if (bar.data.length == 0) {
         svg.append('text')
             .attr('class', 'no-data')
             .attr('x', chartWidth/2)
