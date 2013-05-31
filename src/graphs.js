@@ -27,6 +27,18 @@ d3.graph.bar = function(selector, data, options) {
     }
     options = defaults;
 
+    var getLink = function(d) {
+        var href = null;
+        if (d.link) {
+            href = d.link;
+        }
+        // FIXME using options.clickBase is deprecated
+        else if (options.clickBase) {
+            href = options.clickBase + d.key;
+        }
+        return href;
+    };
+
     // responsive dimensions
     var chartWidth = containerWidth(selector),
         labelWidth = chartWidth / options.labelRatio,
@@ -39,10 +51,25 @@ d3.graph.bar = function(selector, data, options) {
         title = function(d) {return d.key + ': ' + d.value},
         y = function(d, i) {return i * options.barHeight},
         valueY = function(d, i) {return i * options.barHeight + (options.barHeight/2)},
+
         // labels
-        labelClick = function(d) { options.clickBase && (document.location.href = options.clickBase + d.key) },
-        labelClass = function(d) { return options.clickBase ? 'barlabel link' : 'barlabel' },
-        labelTitle = function(d) { return options.clickBase ? 'Click to open ' + options.clickBase + d.key : d.key },
+        labelClick = function(d) {
+            if (href = getLink(d)) {
+                document.location.href = href;
+            }
+        },
+        labelClass = function(d) {
+            return getLink(d) ? 'barlabel link' : 'barlabel';
+        },
+        labelTitle = function(d) {
+            var title = d.key,
+                href = getLink(d);
+            if (href) {
+                title = 'Click to open ' + href;
+            }
+            return title;
+        },
+
         // formats
         formatValue = d3.format(',d'),
         // bar and graph objects
