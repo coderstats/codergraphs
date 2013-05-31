@@ -28,15 +28,7 @@ d3.graph.bar = function(selector, data, options) {
     options = defaults;
 
     var getLink = function(d) {
-        var href = null;
-        if (d.link) {
-            href = d.link;
-        }
-        // FIXME using options.clickBase is deprecated
-        else if (options.clickBase) {
-            href = options.clickBase + d.key;
-        }
-        return href;
+        return d.link ? d.link : null;
     };
 
     // responsive dimensions
