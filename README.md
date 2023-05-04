@@ -1,3 +1,3 @@
 # D3 based Graphs
 
-For a demo see [CoderStats](http://coderstats.net/)
+This project was used on [CoderStats](https://coderstats.github.io/) previously and is not maintained any more.
